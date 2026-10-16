@@ -34,14 +34,31 @@ import {
 } from './palette';
 import { MOTIFS, focusCoverage, insideRect, motifPathForScreen, motifSubpaths, overlaps, rectOf, type Motif, type PathCommand, type Rect } from './decor';
 
+/** Long side of a derived editor canvas (matches the phone presets' 608). */
+const DERIVED_CANVAS_LONG_SIDE = 608;
+
 /**
- * Editor-unit canvas dimensions for a device, by frame class — so a plan that mixes iPhone, iPad,
- * Android and Mac screens gets the right aspect per screen (multi-device). Matches the app's
- * Page Setup presets (phone 280×608, tablet 450×600, laptop/desktop 608×380). Export scales these
- * up to the real App Store pixel sizes.
+ * Editor-unit canvas dimensions for a device, so a plan that mixes iPhone, iPad, Android and Mac
+ * screens gets the right aspect per screen (multi-device). Export scales these up to the real store
+ * pixel sizes.
+ *
+ * - A frame with an explicit `deviceClass` (the iPhone Duo displays, and any frame added from now
+ *   on that sets one) gets its canvas DERIVED from its screen aspect: long side 608, the short side
+ *   rounded (inner Duo 428×608, outer Duo 418×608). A new device then needs no change here.
+ * - Every other frame keeps the original per-category table, unchanged, so saved and composed
+ *   projects keep their dims: phone 280×608, tablet 450×600, laptop/desktop 608×380 (the app's
+ *   Page Setup presets).
  */
 export function canvasDimsForDevice(deviceId: string): { width: number; height: number } {
-	switch (getDeviceFrame(deviceId)?.category) {
+	const frame = getDeviceFrame(deviceId);
+	if (frame?.deviceClass) {
+		const { width: sw, height: sh } = frame.screenBounds;
+		const L = DERIVED_CANVAS_LONG_SIDE;
+		return sh >= sw
+			? { width: Math.round((L * sw) / sh), height: L }
+			: { width: L, height: Math.round((L * sh) / sw) };
+	}
+	switch (frame?.category) {
 		case 'tablet':
 			return { width: 450, height: 600 };
 		case 'laptop':

@@ -5,7 +5,11 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { readFileSync, existsSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'node:path';
 import {
+	deviceClassForDeviceId,
 	deviceFrames,
 	getDeviceFrame,
 	getDeviceFramesByPlatform,
@@ -270,7 +274,9 @@ describe('deviceFrames data integrity', () => {
 	});
 
 	it('should have reasonable aspect ratios for phones', () => {
-		const phones = getDeviceFramesByCategory('phone');
+		// The iPhone Duo (foldable) displays are wide panels (App Store 0.70 / 0.69), not candy-bar
+		// phones; their aspect is checked against the App Store sizes in the Duo tests below.
+		const phones = getDeviceFramesByCategory('phone').filter((p) => !p.id.startsWith('iphone_duo_'));
 
 		for (const phone of phones) {
 			const aspectRatio = phone.imageDimensions.height / phone.imageDimensions.width;
@@ -364,5 +370,53 @@ describe('specific device validation', () => {
 		const proMax = getDeviceFrame('iphone_16_pro_max');
 
 		expect(proMax!.cornerRadius).toBeGreaterThanOrEqual(pro!.cornerRadius);
+	});
+});
+
+// ============ iPHONE DUO (foldable) ============
+
+describe('iPhone Duo frames', () => {
+	const STATIC_DEVICES = resolve(dirname(fileURLToPath(import.meta.url)), '../../../static/devices');
+	/** Width × height of a PNG, read from its IHDR chunk. */
+	const pngSize = (file: string) => {
+		const buf = readFileSync(file);
+		return { width: buf.readUInt32BE(16), height: buf.readUInt32BE(20) };
+	};
+	// App Store Connect screenshot sizes (portrait).
+	const cases = [
+		{ id: 'iphone_duo_inner', store: { width: 2007, height: 2853 }, asset: 'iphone-duo-inner' },
+		{ id: 'iphone_duo_outer', store: { width: 1398, height: 2034 }, asset: 'iphone-duo-outer' }
+	] as const;
+
+	for (const c of cases) {
+		it(`${c.id}: exists as an iOS phone frame in its own device group`, () => {
+			const f = getDeviceFrame(c.id);
+			expect(f).toBeDefined();
+			expect(f!.platform).toBe('ios');
+			expect(f!.deviceClass).toBe(c.id);
+			expect(deviceClassForDeviceId(c.id)).toBe(c.id);
+		});
+
+		it(`${c.id}: screen aspect equals the App Store aspect (within 0.5%)`, () => {
+			const { screenBounds } = getDeviceFrame(c.id)!;
+			const aspect = screenBounds.width / screenBounds.height;
+			const storeAspect = c.store.width / c.store.height;
+			expect(Math.abs(aspect - storeAspect) / storeAspect).toBeLessThan(0.005);
+		});
+
+		it(`${c.id}: ships .webp + .png (+ the .svg source) whose size matches imageDimensions`, () => {
+			const f = getDeviceFrame(c.id)!;
+			expect(f.frameAsset).toBe(`/devices/${c.asset}.webp`);
+			for (const ext of ['webp', 'png', 'svg']) {
+				expect(existsSync(resolve(STATIC_DEVICES, `${c.asset}.${ext}`)), ext).toBe(true);
+			}
+			expect(pngSize(resolve(STATIC_DEVICES, `${c.asset}.png`))).toEqual(f.imageDimensions);
+		});
+	}
+
+	it('keeps every other frame on the platform + category rule (no explicit deviceClass)', () => {
+		const explicit = deviceFrames.filter((f) => f.deviceClass).map((f) => f.id);
+		expect(explicit.sort()).toEqual(['iphone_duo_inner', 'iphone_duo_outer']);
+		expect(deviceClassForDeviceId('iphone_17_pro_max')).toBe('iphone_6_9');
 	});
 });

@@ -1,6 +1,6 @@
 {
   "name": "@appshoteditor/shot-dsl",
-  "version": "0.5.4",
+  "version": "0.6.0",
   "description": "App Shot Editor layout DSL + device-frame geometry — framework-free building blocks for composing editable App Store screenshot layouts. Intended for use via a bundler (Vite, esbuild, etc.).",
   "license": "MIT",
   "type": "module",

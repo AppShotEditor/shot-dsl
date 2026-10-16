@@ -23,6 +23,12 @@ export interface DeviceFrame {
 	imageDimensions: { width: number; height: number }; // Size of the PNG
 	screenBounds: { x: number; y: number; width: number; height: number }; // Screen area within PNG
 	cornerRadius: number; // Corner radius of the screen in pixels (unscaled)
+	/**
+	 * Explicit device GROUP for frames that do not fit the platform + category rule (e.g. the two
+	 * iPhone Duo displays, which each need their own App Store size). A frame that sets this also
+	 * gets its editor canvas derived from its screen aspect (`canvasDimsForDevice`).
+	 */
+	deviceClass?: DeviceClass;
 }
 
 // =============================================================================
@@ -104,6 +110,31 @@ export const deviceFrames: DeviceFrame[] = [
 		imageDimensions: { width: 1490, height: 2996 },
 		screenBounds: { x: 103, y: 106, width: 1284, height: 2786 },
 		cornerRadius: 128
+	},
+	// iPhone Duo (foldable). Original vector drawings (static/devices/iphone-duo-*.svg, rasterised
+	// to .png/.webp). The screen opening is EXACTLY the App Store size, so screenshots fit 1:1.
+	// No crease is drawn over the inner (folding) display.
+	{
+		id: 'iphone_duo_inner',
+		name: 'iPhone Duo (inner 7.6")',
+		platform: 'ios',
+		category: 'phone',
+		frameAsset: '/devices/iphone-duo-inner.webp',
+		imageDimensions: { width: 2183, height: 3029 },
+		screenBounds: { x: 88, y: 88, width: 2007, height: 2853 },
+		cornerRadius: 120,
+		deviceClass: 'iphone_duo_inner'
+	},
+	{
+		id: 'iphone_duo_outer',
+		name: 'iPhone Duo (outer 5.4")',
+		platform: 'ios',
+		category: 'phone',
+		frameAsset: '/devices/iphone-duo-outer.webp',
+		imageDimensions: { width: 1574, height: 2210 },
+		screenBounds: { x: 88, y: 88, width: 1398, height: 2034 },
+		cornerRadius: 140,
+		deviceClass: 'iphone_duo_outer'
 	},
 
 	// -------------------------------------------------------------------------
@@ -326,6 +357,7 @@ export function getDeviceFramesByCategory(category: DeviceFrame['category']): De
 export function deviceClassForDeviceId(deviceId: string): DeviceClass | null {
 	const frame = getDeviceFrame(deviceId);
 	if (!frame) return null;
+	if (frame.deviceClass) return frame.deviceClass;
 	if (frame.platform === 'ios') return frame.category === 'tablet' ? 'ipad_13' : 'iphone_6_9';
 	if (frame.platform === 'android') return 'android_phone';
 	if (frame.platform === 'macos' || frame.platform === 'windows') return 'macbook';

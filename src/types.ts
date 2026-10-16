@@ -87,7 +87,13 @@ export interface BackgroundJSON {
  * Device GROUP a screen belongs to (multi-device). Mirrors the app's `db.ts` union so a composed
  * template can tag each screen and the editor buckets it into the right sidebar group on import.
  */
-export type DeviceClass = 'iphone_6_9' | 'ipad_13' | 'android_phone' | 'macbook';
+export type DeviceClass =
+	| 'iphone_6_9'
+	| 'iphone_duo_inner'
+	| 'iphone_duo_outer'
+	| 'ipad_13'
+	| 'android_phone'
+	| 'macbook';
 
 /** One screen (canvas) of a design. */
 export interface ScreenLayersJSON {

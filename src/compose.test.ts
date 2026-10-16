@@ -1,10 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { composeTemplate, composeSet, COMPOSE_LAYOUTS, type ComposeScreenPlan, type ComposePlan } from './compose';
+import { canvasDimsForDevice, composeTemplate, composeSet, COMPOSE_LAYOUTS, type ComposeScreenPlan, type ComposePlan } from './compose';
 import { makeVariants } from './variants';
 import { NO_TANGENT } from './layout-system';
 import type { ScreenLayersJSON } from './types';
 import { makeSolidBackground } from './builders';
 import { validateTemplate } from './validate';
+import { deviceFrames } from './device-frames';
 
 describe('composeTemplate', () => {
 	it('assembles a valid Template from a plan', () => {
@@ -407,3 +408,39 @@ describe('deep-bleed gap regression (variants B/C, real device canvases)', () =>
 	}
 });
 
+
+describe('canvasDimsForDevice', () => {
+	it('keeps every existing device on its original editor dims (unchanged)', () => {
+		const legacy: Record<string, { width: number; height: number }> = {
+			phone: { width: 280, height: 608 },
+			tablet: { width: 450, height: 600 },
+			laptop: { width: 608, height: 380 },
+			desktop: { width: 608, height: 380 }
+		};
+		const checked = deviceFrames.filter((f) => !f.id.startsWith('iphone_duo_'));
+		expect(checked.length).toBeGreaterThan(20);
+		for (const f of checked) expect(canvasDimsForDevice(f.id), f.id).toEqual(legacy[f.category]);
+		expect(canvasDimsForDevice('iphone_17_pro_max')).toEqual({ width: 280, height: 608 });
+		expect(canvasDimsForDevice('ipad_pro_13_m4')).toEqual({ width: 450, height: 600 });
+		expect(canvasDimsForDevice('macbook_pro_14')).toEqual({ width: 608, height: 380 });
+		expect(canvasDimsForDevice('not_a_device')).toEqual({ width: 280, height: 608 });
+	});
+
+	it('derives the iPhone Duo canvases from the frame screen aspect (608 tall)', () => {
+		expect(canvasDimsForDevice('iphone_duo_inner')).toEqual({ width: 428, height: 608 });
+		expect(canvasDimsForDevice('iphone_duo_outer')).toEqual({ width: 418, height: 608 });
+	});
+
+	it('composes a Duo screen at its derived canvas, tagged with its device group', () => {
+		for (const [deviceId, width] of [['iphone_duo_inner', 428], ['iphone_duo_outer', 418]] as const) {
+			const t = composeTemplate({
+				name: 'Duo',
+				screens: [{ headline: 'Hello Duo', deviceId, screenshot: { url: '/api/screenshots/a/raw', width: 1206, height: 2622 } }]
+			} as unknown as ComposePlan);
+			expect(t.screens[0].canvasWidth).toBe(width);
+			expect(t.screens[0].canvasHeight).toBe(608);
+			expect(t.screens[0].deviceClass).toBe(deviceId);
+			expect(validateTemplate(t).valid).toBe(true);
+		}
+	});
+});

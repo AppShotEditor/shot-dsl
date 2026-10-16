@@ -28,6 +28,7 @@ composer — so a layout composed by the skill renders identically in the editor
 - **Art direction (0.5.0)** — `breakLines` (balanced line breaks, `typography.ts`), tonal palettes +
   `harmonize` (one WCAG-AA text colour per set, `palette.ts`), panorama motifs (`decor.ts`), and in
   `composeSet`: the hero, accent rhythm, callouts, mascots and shadows (see "Art direction" below).
+- **iPhone Duo (0.6.0)** — see "iPhone Duo" below.
 
 ```ts
 import { composeTemplate, validateTemplate } from '@appshoteditor/shot-dsl';
@@ -267,6 +268,27 @@ A screen's `layers` array is **bottom → top**: index 0 is painted first (canva
 entry is frontmost. A composed screen is `[device, headline, subheadline?]`; the editor's built-in
 templates list background shapes, then the device, then text. (The editor's layers *panel* shows the
 reverse — top first.)
+
+## iPhone Duo (0.6.0)
+
+The foldable iPhone Duo has two App Store screenshot sizes, so it has two device ids and two device
+groups (`DeviceClass`):
+
+| `deviceId` / `deviceClass` | Display | App Store portrait | Landscape | Editor canvas |
+|----------------------------|---------|--------------------|-----------|---------------|
+| `iphone_duo_inner` | inner 7.6" (open) | 2007×2853 | 2853×2007 | 428×608 |
+| `iphone_duo_outer` | outer 5.4" (closed) | 1398×2034 | 2034×1398 | 418×608 |
+
+- The frames (`/devices/iphone-duo-inner.webp`, `/devices/iphone-duo-outer.webp`) are original
+  drawings (vector source `.svg` next to them, not Apple artwork). The screen opening is exactly the
+  App Store size, and no crease is drawn over the inner (folding) display.
+- `DeviceFrame.deviceClass` (new, optional): a frame can name its device group explicitly;
+  `deviceClassForDeviceId` returns it. All earlier frames keep the platform + category rule.
+- `canvasDimsForDevice` derives the canvas of a frame that sets `deviceClass` from its screen aspect
+  (long side 608). Every earlier device keeps its old dims exactly (phone 280×608, tablet 450×600,
+  laptop/desktop 608×380).
+- `composeTemplate` with a Duo `deviceId` tags the screen with the matching `deviceClass`, so the
+  editor puts it in the right sidebar group.
 
 ## Device screenshots (0.3.0)
 
