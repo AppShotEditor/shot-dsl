@@ -1,0 +1,50 @@
+{
+  "name": "@appshoteditor/shot-dsl",
+  "version": "0.5.4",
+  "description": "App Shot Editor layout DSL + device-frame geometry — framework-free building blocks for composing editable App Store screenshot layouts. Intended for use via a bundler (Vite, esbuild, etc.).",
+  "license": "MIT",
+  "type": "module",
+  "main": "./src/index.ts",
+  "module": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "files": [
+    "src/index.ts",
+    "src/types.ts",
+    "src/validate.ts",
+    "src/builders.ts",
+    "src/compose.ts",
+    "src/frames.ts",
+    "src/device-frames.ts",
+    "src/layout-system.ts",
+    "src/color.ts",
+    "src/variants.ts",
+    "src/typography.ts",
+    "src/palette.ts",
+    "src/decor.ts"
+  ],
+  "sideEffects": false,
+  "keywords": [
+    "app-store-screenshots",
+    "appshoteditor",
+    "agent-skill",
+    "device-frames",
+    "layout-dsl"
+  ],
+  "homepage": "https://github.com/AppShotEditor/shot-dsl#readme",
+  "bugs": {
+    "url": "https://github.com/AppShotEditor/shot-dsl/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AppShotEditor/shot-dsl.git"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
